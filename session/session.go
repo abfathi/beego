@@ -106,6 +106,7 @@ type ManagerConfig struct {
 	SessionNameInHTTPHeader string `json:"SessionNameInHTTPHeader"`
 	EnableSidInURLQuery     bool   `json:"EnableSidInURLQuery"`
 	SessionIDPrefix         string `json:"sessionIDPrefix"`
+	SameSite                int  `json:"sameSite"`
 }
 
 // Manager contains Provider and its configuration.
@@ -225,6 +226,7 @@ func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (se
 	if err != nil {
 		return nil, err
 	}
+
 	cookie := &http.Cookie{
 		Name:     manager.config.CookieName,
 		Value:    url.QueryEscape(sid),
@@ -232,6 +234,7 @@ func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (se
 		HttpOnly: !manager.config.DisableHTTPOnly,
 		Secure:   manager.isSecure(r),
 		Domain:   manager.config.Domain,
+		SameSite: manager.validateSameSiteSet(manager.config.SameSite),
 	}
 	if manager.config.CookieLifeTime > 0 {
 		cookie.MaxAge = manager.config.CookieLifeTime
@@ -271,7 +274,9 @@ func (manager *Manager) SessionDestroy(w http.ResponseWriter, r *http.Request) {
 			HttpOnly: !manager.config.DisableHTTPOnly,
 			Expires:  expiration,
 			MaxAge:   -1,
-			Domain:   manager.config.Domain}
+			Domain:   manager.config.Domain,
+			SameSite: manager.validateSameSiteSet(manager.config.SameSite),
+		}
 
 		http.SetCookie(w, cookie)
 	}
@@ -306,6 +311,7 @@ func (manager *Manager) SessionRegenerateID(w http.ResponseWriter, r *http.Reque
 			HttpOnly: !manager.config.DisableHTTPOnly,
 			Secure:   manager.isSecure(r),
 			Domain:   manager.config.Domain,
+			SameSite: manager.validateSameSiteSet(manager.config.SameSite),
 		}
 	} else {
 		oldsid, _ := url.QueryUnescape(cookie.Value)
@@ -363,7 +369,18 @@ func (manager *Manager) isSecure(req *http.Request) bool {
 	}
 	return true
 }
-
+// vaildate SameSite is set properly
+func (manager *Manager) validateSameSiteSet(sameSiteField int) http.SameSite{
+    var sameSiteCast http.SameSite = http.SameSite(sameSiteField)
+	switch sameSiteCast{
+	case 	http.SameSiteLaxMode:
+	   return http.SameSiteLaxMode
+	case 	http.SameSiteStrictMode:
+	   return http.SameSiteStrictMode
+	default:
+	   return http.SameSiteDefaultMode
+	}
+}
 // Log implement the log.Logger
 type Log struct {
 	*log.Logger
