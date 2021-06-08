@@ -243,6 +243,7 @@ func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (se
 	if manager.config.EnableSetCookie {
 		http.SetCookie(w, cookie)
 	}
+
 	r.AddCookie(cookie)
 
 	if manager.config.EnableSidInHTTPHeader {
@@ -361,9 +362,16 @@ func (manager *Manager) isSecure(req *http.Request) bool {
 	if !manager.config.Secure {
 		return false
 	}
+
+	forwardProto := req.Header.Get("X-Forwarded-Proto")
+	if (forwardProto == "https"){
+		return true
+	}
+
 	if req.URL.Scheme != "" {
 		return req.URL.Scheme == "https"
 	}
+
 	if req.TLS == nil {
 		return false
 	}
