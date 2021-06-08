@@ -361,9 +361,16 @@ func (manager *Manager) isSecure(req *http.Request) bool {
 	if !manager.config.Secure {
 		return false
 	}
+	// test X-Forwarded-Proto http header forwarded by reverse proxy
+	forwardProto := req.Header.Get("X-Forwarded-Proto")
+	if (forwardProto == "https"){
+		return true
+	}
+	// this Scheme is empty
 	if req.URL.Scheme != "" {
 		return req.URL.Scheme == "https"
 	}
+	// TLS config is empty since behind a reverse proxy which does TLS termination
 	if req.TLS == nil {
 		return false
 	}
