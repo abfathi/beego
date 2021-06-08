@@ -361,7 +361,7 @@ func (manager *Manager) isSecure(req *http.Request) bool {
 	if !manager.config.Secure {
 		return false
 	}
-	// test X-Forwarded-Proto http header forwarded by reverse proxy
+	// test X-Forwarded-Proto http header set by reverse proxy
 	forwardProto := req.Header.Get("X-Forwarded-Proto")
 	if (forwardProto == "https"){
 		return true
@@ -376,7 +376,7 @@ func (manager *Manager) isSecure(req *http.Request) bool {
 	}
 	return true
 }
-// vaildate SameSite is set properly
+// validate SameSite is set properly
 func (manager *Manager) validateSameSiteSet(sameSiteField int) http.SameSite{
     var sameSiteCast http.SameSite = http.SameSite(sameSiteField)
 	switch sameSiteCast{
