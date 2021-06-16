@@ -680,7 +680,17 @@ func (p *ControllerRegister) ServeHTTP(rw http.ResponseWriter, r *http.Request) 
 	if BConfig.RunMode == DEV {
 		context.Output.Header("Server", BConfig.ServerName)
 	}
+	// AppSpider Security headers
+	appSpiderSecurityHeader := map[string]string{
+		"X-Frame-Options":        "DENY",
+		"X-Content-Type-Options": "nosniff",
+		"X-XSS-Protection":       "1; mode=block",
+	}
 
+	// Apply AppSpider security Headers
+	for header, v := range appSpiderSecurityHeader {
+		context.Output.Header(header, v)
+	}
 	var urlPath = r.URL.Path
 
 	if !BConfig.RouterCaseSensitive {
